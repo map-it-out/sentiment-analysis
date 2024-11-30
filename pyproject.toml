@@ -1,0 +1,31 @@
+[virtualenvs]
+create = false
+
+[tool.poetry]
+name = "crypto-sentiment-analyzer"
+version = "0.1.0"
+description = "A cryptocurrency sentiment analysis tool using Reddit, RSS feeds, and Fear & Greed Index"
+authors = ["Glenn Steven Santoso <glennstevensantoso@gmail.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+praw = "^7.7.1"
+pandas = "^2.1.0"
+nltk = "^3.8.1"
+feedparser = "^6.0.10"
+requests = "^2.31.0"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.4.0"
+black = "^23.7.0"
+flake8 = "^6.1.0"
+mypy = "^1.5.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+analyze = "sentiment.reddit_analyzer:main"
