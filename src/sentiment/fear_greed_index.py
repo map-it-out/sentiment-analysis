@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import requests
 from typing import Dict, List, Optional
+from src.const.url import FNG_API_URL
 
 @dataclass
 class FearGreedData:
@@ -20,7 +21,7 @@ class FearGreedFetcher(ABC):
 
 class CNNFearGreedFetcher(FearGreedFetcher):
     """Implementation of fear and greed fetcher using CNN's API"""
-    def __init__(self, api_url: str = "https://api.alternative.me/fng/"):
+    def __init__(self, api_url: str = FNG_API_URL):
         self.api_url = api_url
         
     def fetch_data(self) -> FearGreedData:
@@ -74,7 +75,7 @@ class FearGreedAnalyzer:
 
 # Example usage
 if __name__ == "__main__":
-    fetcher = CNNFearGreedFetcher()
+    fetcher = CNNFearGreedFetcher(FNG_API_URL)
     analyzer = FearGreedAnalyzer(fetcher)
     
     try:
@@ -82,5 +83,6 @@ if __name__ == "__main__":
         print(f"Current Fear & Greed Index: {sentiment['value']}")
         print(f"Classification: {sentiment['classification']}")
         print(f"Interpretation: {sentiment['interpretation']}")
+        print(f"Timestamp: {sentiment['timestamp']}")
     except FearGreedFetchError as e:
         print(f"Error: {e}")
