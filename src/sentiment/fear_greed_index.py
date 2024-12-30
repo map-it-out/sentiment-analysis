@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 import requests
-from typing import Dict, List, Optional
 from src.const.url import FNG_API_URL
+from src.sentiment.base_analyzer import BaseSentimentAnalyzer, SentimentResult
 
 @dataclass
 class FearGreedData:
@@ -44,21 +44,29 @@ class FearGreedFetchError(Exception):
     """Custom exception for fear and greed fetching errors"""
     pass
 
-class FearGreedAnalyzer:
-    """Analyzes fear and greed data"""
+class FearGreedAnalyzer(BaseSentimentAnalyzer):
+    """Analyzes fear and greed data using the base analyzer framework"""
     def __init__(self, fetcher: FearGreedFetcher):
         self.fetcher = fetcher
     
-    def get_market_sentiment(self) -> Dict[str, any]:
-        """Get current market sentiment analysis"""
+    def get_sentiment(self) -> SentimentResult:
+        """Get sentiment analysis result"""
         try:
             data = self.fetcher.fetch_data()
-            return {
-                'value': data.value,
-                'classification': data.value_classification,
-                'timestamp': data.timestamp.isoformat(),
-                'interpretation': self._interpret_value(data.value)
-            }
+            # Normalize value from [0, 100] to [-1, 1]
+            normalized_value = self.normalize_score(data.value, 0, 100)
+            classification = self.classify_sentiment(normalized_value)
+            
+            return SentimentResult(
+                value=normalized_value,
+                classification=classification,
+                interpretation=self._interpret_value(data.value),
+                raw_data={
+                    'original_value': data.value,
+                    'original_classification': data.value_classification
+                },
+                timestamp=data.timestamp.isoformat()
+            )
         except FearGreedFetchError as e:
             raise e
     
@@ -79,10 +87,10 @@ if __name__ == "__main__":
     analyzer = FearGreedAnalyzer(fetcher)
     
     try:
-        sentiment = analyzer.get_market_sentiment()
-        print(f"Current Fear & Greed Index: {sentiment['value']}")
-        print(f"Classification: {sentiment['classification']}")
-        print(f"Interpretation: {sentiment['interpretation']}")
-        print(f"Timestamp: {sentiment['timestamp']}")
+        sentiment = analyzer.get_sentiment()
+        print(f"Current Fear & Greed Index: {sentiment.value}")
+        print(f"Classification: {sentiment.classification}")
+        print(f"Interpretation: {sentiment.interpretation}")
+        print(f"Timestamp: {sentiment.timestamp}")
     except FearGreedFetchError as e:
         print(f"Error: {e}")
