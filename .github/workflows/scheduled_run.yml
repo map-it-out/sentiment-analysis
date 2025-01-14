@@ -41,7 +41,7 @@ jobs:
 
       - name: Create credentials.json
         run: |
-          cat > credentials.json << 'EOL'
+          cat > credentials.json << 'EOF'
           {
             "type": "service_account",
             "project_id": "${{ secrets.GOOGLE_PROJECT_ID }}",
@@ -55,7 +55,7 @@ jobs:
             "client_x509_cert_url": "${{ secrets.GOOGLE_CLIENT_X509_CERT_URL }}",
             "universe_domain": "googleapis.com"
           }
-          EOL
+          EOF
           echo "Created credentials.json in $(pwd)"
           cat credentials.json
 
