@@ -42,7 +42,7 @@ jobs:
     - name: Create credentials.json
       working-directory: src/exec
       run: |
-        echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+        echo '${{ toJSON(secrets.GOOGLE_CREDENTIALS) }}' > credentials.json
 
     - name: Run sentiment analysis
       working-directory: src/exec
