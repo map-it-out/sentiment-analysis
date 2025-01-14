@@ -40,10 +40,10 @@ jobs:
         echo "CRYPTO_SLATE_RSS_ID=${{ secrets.CRYPTO_SLATE_RSS_ID }}" >> .env
 
     - name: Create credentials.json
+      working-directory: src/exec
       run: |
         echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
 
     - name: Run sentiment analysis
-      run: |
-        cd src
-        python exec/sentiment.py
+      working-directory: src/exec
+      run: python sentiment.py
