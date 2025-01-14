@@ -4,50 +4,64 @@ name: Run Sentiment Analysis
 
 on:
   schedule:
-    - cron: '0 */4 * * *'  # Runs every 4 hours
-  workflow_dispatch:        # Allows manual triggering
+    - cron: "0 */4 * * *" # Runs every 4 hours
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   analyze-sentiment:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-        cache: 'pip'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    
-    - name: Install package in editable mode
-      run: |
-        pip install -e .
-    
-    - name: Create .env file
-      run: |
-        echo "REDDIT_CLIENT_ID=${{ secrets.REDDIT_CLIENT_ID }}" >> .env
-        echo "REDDIT_CLIENT_SECRET=${{ secrets.REDDIT_CLIENT_SECRET }}" >> .env
-        echo "REDDIT_USER_AGENT=${{ secrets.REDDIT_USER_AGENT }}" >> .env
-        echo "SPREADSHEET_ID=${{ secrets.SPREADSHEET_ID }}" >> .env
-        echo "COIN_TELEGRAPH_RSS_ID=${{ secrets.COIN_TELEGRAPH_RSS_ID }}" >> .env
-        echo "CRYPTO_SLATE_RSS_ID=${{ secrets.CRYPTO_SLATE_RSS_ID }}" >> .env
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Create credentials.json
-      run: |
-        echo '${{ secrets.GOOGLE_CREDENTIALS }}' | jq '.' > credentials.json
-        echo "Created credentials.json in $(pwd)"
-        cat credentials.json
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          cache: "pip"
 
-    - name: Run sentiment analysis
-      run: |
-        echo "Current directory: $(pwd)"
-        echo "Contents of directory:"
-        ls -la
-        python src/exec/sentiment.py
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Install package in editable mode
+        run: |
+          pip install -e .
+
+      - name: Create .env file
+        run: |
+          echo "REDDIT_CLIENT_ID=${{ secrets.REDDIT_CLIENT_ID }}" >> .env
+          echo "REDDIT_CLIENT_SECRET=${{ secrets.REDDIT_CLIENT_SECRET }}" >> .env
+          echo "REDDIT_USER_AGENT=${{ secrets.REDDIT_USER_AGENT }}" >> .env
+          echo "SPREADSHEET_ID=${{ secrets.SPREADSHEET_ID }}" >> .env
+          echo "COIN_TELEGRAPH_RSS_ID=${{ secrets.COIN_TELEGRAPH_RSS_ID }}" >> .env
+          echo "CRYPTO_SLATE_RSS_ID=${{ secrets.CRYPTO_SLATE_RSS_ID }}" >> .env
+
+      - name: Create credentials.json
+        run: |
+          cat > credentials.json << 'EOL'
+          {
+            "type": "service_account",
+            "project_id": "${{ secrets.GOOGLE_PROJECT_ID }}",
+            "private_key_id": "${{ secrets.GOOGLE_PRIVATE_KEY_ID }}",
+            "private_key": "${{ secrets.GOOGLE_PRIVATE_KEY }}",
+            "client_email": "${{ secrets.GOOGLE_CLIENT_EMAIL }}",
+            "client_id": "${{ secrets.GOOGLE_CLIENT_ID }}",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_x509_cert_url": "${{ secrets.GOOGLE_CLIENT_X509_CERT_URL }}",
+            "universe_domain": "googleapis.com"
+          }
+          EOL
+          echo "Created credentials.json in $(pwd)"
+          cat credentials.json
+
+      - name: Run sentiment analysis
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents of directory:"
+          ls -la
+          python src/exec/sentiment.py
