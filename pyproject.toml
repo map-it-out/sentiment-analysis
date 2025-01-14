@@ -6,7 +6,8 @@ name = "crypto-sentiment-analyzer"
 version = "0.1.0"
 description = "A cryptocurrency sentiment analysis tool using Reddit, RSS feeds, and Fear & Greed Index"
 authors = ["Glenn Steven Santoso <glennstevensantoso@gmail.com>"]
-package-mode = false
+package-mode = true
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
@@ -25,7 +26,7 @@ praw = ">=7.7.1"
 websocket-client = ">=1.6.0"
 feedparser = "^6.0.10"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 black = "^23.7.0"
 flake8 = "^6.1.0"
