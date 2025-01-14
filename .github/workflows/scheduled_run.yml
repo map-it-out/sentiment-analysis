@@ -1,0 +1,45 @@
+# .github/workflows/sentiment_analysis.yml
+
+name: Run Sentiment Analysis
+
+on:
+  schedule:
+    - cron: '0 */4 * * *'  # Runs every 4 hours
+  workflow_dispatch:        # Allows manual triggering
+
+jobs:
+  analyze-sentiment:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: Install package in editable mode
+      run: |
+        pip install -e .
+    
+    - name: Create .env file
+      run: |
+        echo "REDDIT_CLIENT_ID=${{ secrets.REDDIT_CLIENT_ID }}" >> .env
+        echo "REDDIT_CLIENT_SECRET=${{ secrets.REDDIT_CLIENT_SECRET }}" >> .env
+        echo "REDDIT_USER_AGENT=${{ secrets.REDDIT_USER_AGENT }}" >> .env
+        echo "SPREADSHEET_ID=${{ secrets.SPREADSHEET_ID }}" >> .env
+        echo "COIN_TELEGRAPH_RSS_ID=${{ secrets.COIN_TELEGRAPH_RSS_ID }}" >> .env
+        echo "CRYPTO_SLATE_RSS_ID=${{ secrets.CRYPTO_SLATE_RSS_ID }}" >> .env
+    
+    - name: Run sentiment analysis
+      run: |
+        cd src
+        python exec/sentiment.py
