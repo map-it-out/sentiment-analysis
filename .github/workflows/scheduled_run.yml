@@ -41,12 +41,15 @@ jobs:
 
       - name: Create credentials.json
         run: |
-          # Create the JSON with proper newlines in private key
+          # First, create the private key with proper newlines
+          echo "${{ secrets.GOOGLE_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > private_key.txt
+          
+          # Now create the credentials JSON with the formatted private key
           echo '{
             "type": "service_account",
             "project_id": "${{ secrets.GOOGLE_PROJECT_ID }}",
             "private_key_id": "${{ secrets.GOOGLE_PRIVATE_KEY_ID }}",
-            "private_key": "${{ secrets.GOOGLE_PRIVATE_KEY }}",
+            "private_key": "'$(cat private_key.txt)'",
             "client_email": "${{ secrets.GOOGLE_CLIENT_EMAIL }}",
             "client_id": "${{ secrets.GOOGLE_CLIENT_ID }}",
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -56,6 +59,7 @@ jobs:
             "universe_domain": "googleapis.com"
           }' > credentials.json
           
+          rm private_key.txt
           echo "Created credentials.json in $(pwd)"
           echo "File contents:"
           cat credentials.json
