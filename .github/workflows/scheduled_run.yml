@@ -38,7 +38,11 @@ jobs:
         echo "SPREADSHEET_ID=${{ secrets.SPREADSHEET_ID }}" >> .env
         echo "COIN_TELEGRAPH_RSS_ID=${{ secrets.COIN_TELEGRAPH_RSS_ID }}" >> .env
         echo "CRYPTO_SLATE_RSS_ID=${{ secrets.CRYPTO_SLATE_RSS_ID }}" >> .env
-    
+
+    - name: Create credentials.json
+      run: |
+        echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+
     - name: Run sentiment analysis
       run: |
         cd src
