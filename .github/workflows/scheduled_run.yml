@@ -41,9 +41,9 @@ jobs:
 
     - name: Create credentials.json
       run: |
-        echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+        echo '${{ secrets.GOOGLE_CREDENTIALS }}' | jq '.' > credentials.json
         echo "Created credentials.json in $(pwd)"
-        ls -la credentials.json
+        cat credentials.json
 
     - name: Run sentiment analysis
       run: |
