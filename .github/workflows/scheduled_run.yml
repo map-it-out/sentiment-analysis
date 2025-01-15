@@ -41,10 +41,30 @@ jobs:
 
       - name: Create credentials.json
         run: |
-          echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+          echo '${{ secrets.GOOGLE_PRIVATE_KEY }}' | sed 's/\\n/\n/g' > private_key.txt
           
-          # Verify the file was created
+          # Create the JSON with properly formatted private key
+          cat << EOF > credentials.json
+          {
+            "type": "service_account",
+            "project_id": "${{ secrets.GOOGLE_PROJECT_ID }}",
+            "private_key_id": "${{ secrets.GOOGLE_PRIVATE_KEY_ID }}",
+            "private_key": "$(cat private_key.txt)",
+            "client_email": "${{ secrets.GOOGLE_CLIENT_EMAIL }}",
+            "client_id": "${{ secrets.GOOGLE_CLIENT_ID }}",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_x509_cert_url": "${{ secrets.GOOGLE_CLIENT_X509_CERT_URL }}",
+            "universe_domain": "googleapis.com"
+          }
+          EOF
+          
+          # Clean up the temporary file
+          rm private_key.txt
+          
           echo "Created credentials.json in $(pwd)"
+          echo "File permissions:"
           ls -l credentials.json
 
       - name: Run sentiment analysis
