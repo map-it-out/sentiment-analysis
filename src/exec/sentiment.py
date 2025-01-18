@@ -34,7 +34,7 @@ def collect_and_append_sentiment():
     # Initialize analyzers
     fear_greed_fetcher = CNNFearGreedFetcher(FNG_API_URL)
     fear_greed_analyzer = FearGreedAnalyzer(fear_greed_fetcher)
-    # reddit_analyzer = RedditSentimentAnalyzer()
+    reddit_analyzer = RedditSentimentAnalyzer()
     
     try:
         # Get Fear & Greed sentiment
