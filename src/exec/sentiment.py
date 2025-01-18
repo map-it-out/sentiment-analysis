@@ -44,7 +44,6 @@ def collect_and_append_sentiment():
         # Get Reddit sentiment
         reddit_df = reddit_analyzer.scrape_posts(query='bitcoin', limit=100)
         reddit_analysis = reddit_analyzer.analyze_sentiment(reddit_df)
-        # reddit_analysis = {'overall_sentiment': 0.5} # hardcoded due to Reddit connection issue in Indonesia
         reddit_score = (reddit_analysis['average_sentiment'] + 1) / 2  # Convert from [-1, 1] to [0, 1]
         
         # Calculate weighted scores (0.5 each)
