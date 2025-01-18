@@ -40,16 +40,16 @@ jobs:
           echo "CRYPTO_SLATE_RSS_ID=${{ secrets.CRYPTO_SLATE_RSS_ID }}" >> .env
 
       - name: Create credentials.json
+        env:
+          PRIVATE_KEY: ${{ secrets.GOOGLE_PRIVATE_KEY }}
         run: |
-          echo '${{ secrets.GOOGLE_PRIVATE_KEY }}' | sed 's/\\n/\n/g' > private_key.txt
-          
-          # Create the JSON with properly formatted private key
-          cat << EOF > credentials.json
+          # Create credentials.json with environment variable substitution
+          cat > credentials.json << 'EOF'
           {
             "type": "service_account",
             "project_id": "${{ secrets.GOOGLE_PROJECT_ID }}",
             "private_key_id": "${{ secrets.GOOGLE_PRIVATE_KEY_ID }}",
-            "private_key": "$(cat private_key.txt)",
+            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCrsvctExlE1oM6\nkxBzeQcJFfznYdYC3gtvMu0Jy2iqx6twBWZm0MtbofEY8qD5TqJ17cW9KcizgYa8\nKHicRlbU7aunrwd1p8TkFoY/+je6cG8OfuUT7SEozwMOceH4xs+jWZZv+T/h67Yd\nCaZiRQS73pTR37uUVfyLXYCEzDpNUp8NNs2vT9dufP2zkUzE6JARjV+71YK2wRM1\nO9QSpt4MUfOQZLV1XtAayfQtgSLAlq6QFUjyZsXF40MCetMiYwhzrK+JF8mkFtNC\n4kMt9wJeneMFgMSOajmx2uw2DVHsqdmQ/Nt+DNrMeEPtf8YJ17a+tlx2tbcXaoZA\nck0Y5ZlhAgMBAAECggEADlauv6vlo1MKuHyJlisYRFD6wtPvzGOArvOgyf2bqw9r\nqLo6uAFdyjQ27y9r9AX2GUUXC1oO8bayasoycFKLc9K5UBKU2+V70tRyt6sMtlwn\nWh2MweI+r6rCBZXLGjx4IJsdrhIxnItTtQ8WPwSmhY3r/a7ielvH8FeJoQ1xHP3T\nP0XDe+TB6mPyf2h5let9GUnqLQLgAHHVgnEANBtnYK9kwQ98NHUVMRBU4MJ7ufRf\nZsWey3IMTsVSSCk5XkzlGRi53Yl5k8fdxLNA3z5NG9iZCcOQ3JFXnYZwvACg2QKk\nfSwlIFI3bGZZEnD5SnYbfIxZTZhcP0JI2jHYJexxlQKBgQDh3sFNwjhL47FIFrcb\nVOK5HyDGidOWmWaEbkIz8WdjFkeu/ov/60JwJ4kUHQTFE/NemJj5GtDRvPX7rYYO\nsk+EIzOacazA1Dh8zGczUS3bMjP+scjrGAh6fdrf46J5uux8RuKcIuCHzAXAOJoz\niWFEgWmf0MjGgxeAK6juWNaTuwKBgQDCmlJiDYrmvyS6Rgn/XqpwtQIF53IWnkYG\njiqRn+LvwRn2tvmIZ3vb8a90SlRlsv6lvtcHbmVdkWMaQ9ASJ0gqvY+JRLosKXgD\n1N8uPjXLiMLpCM2SE9E0DbBUzXczPEm2i4LejoQiC9MJQmOkxUAMnQJfGcGiJ8gA\nxfAhcF9/kwKBgBSiR+B1pLTyGQjv4kxh5dBpkpHwl17DpsTkWbHrFLnNmEDZSirX\n8BrU0cX/nKbwWqRCpn7jPz5Z19LlGEERcwgsOxOZ3OFEweBMwATFHr5OiMd0sFkh\nueyOwMcBQZ+DPwVfaGZBHWfqcIAN67BXlYYvmFmcNitEYIo58tXLUdbvAoGBALVF\n+6fK5bC8LQI3a+itzibe9dt6FRRsqt5AX/b28PZU8lKXbypY+0+Oetngw21Yp0zN\n0I/jjhjy7VXyBUhjvx3RJnu/wYyRtHIdQShaWtIVuzpIMPX5786FUdQs8PSRHDkn\nC+k06HCugw8FALzj4R3ew+7Cl1TtqajOuTjs7IhxAoGAWwjU5BZsduUXt+J1JJVU\nMJ9LRSxg0MHR2UJzi71Dq3K3TL7GbIgL2FkfTe5URWw7i1TK0oIzHSkrD4MUnZea\nsKE04BIIyVKfbiV1mHBHzi3E5GW+MnoaDJrUJaW6lw9ko6BoTZrOlp+6CL3fidCq\nnbnHaYjJT1HS8o/Hr+rZpfQ=\n-----END PRIVATE KEY-----\n",
             "client_email": "${{ secrets.GOOGLE_CLIENT_EMAIL }}",
             "client_id": "${{ secrets.GOOGLE_CLIENT_ID }}",
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
@@ -60,8 +60,8 @@ jobs:
           }
           EOF
           
-          # Clean up the temporary file
-          rm private_key.txt
+          # Replace the environment variable placeholder with actual value
+          sed -i "s|\$PRIVATE_KEY|$PRIVATE_KEY|g" credentials.json
           
           echo "Created credentials.json in $(pwd)"
           echo "File permissions:"
