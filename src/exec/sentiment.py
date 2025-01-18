@@ -34,7 +34,7 @@ def collect_and_append_sentiment():
     # Initialize analyzers
     fear_greed_fetcher = CNNFearGreedFetcher(FNG_API_URL)
     fear_greed_analyzer = FearGreedAnalyzer(fear_greed_fetcher)
-    # reddit_analyzer = RedditSentimentAnalyzer()
+    reddit_analyzer = RedditSentimentAnalyzer()
     
     try:
         # Get Fear & Greed sentiment
@@ -42,10 +42,9 @@ def collect_and_append_sentiment():
         fear_greed_score = (fear_greed_sentiment.value + 1) / 2  # Convert from [-1, 1] to [0, 1]
         
         # Get Reddit sentiment
-        # reddit_df = reddit_analyzer.scrape_posts(query='bitcoin', limit=100)
-        # reddit_analysis = reddit_analyzer.analyze_sentiment(reddit_df)
-        reddit_analysis = {'overall_sentiment': 0.5} # hardcoded due to Reddit connection issue in Indonesia
-        reddit_score = (reddit_analysis['overall_sentiment'] + 1) / 2  # Convert from [-1, 1] to [0, 1]
+        reddit_df = reddit_analyzer.scrape_posts(query='bitcoin', limit=100)
+        reddit_analysis = reddit_analyzer.analyze_sentiment(reddit_df)
+        reddit_score = (reddit_analysis['average_sentiment'] + 1) / 2  # Convert from [-1, 1] to [0, 1]
         
         # Calculate weighted scores (0.5 each)
         weighted_fear_greed = fear_greed_score * 0.5
