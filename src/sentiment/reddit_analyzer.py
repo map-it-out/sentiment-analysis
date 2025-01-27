@@ -96,58 +96,62 @@ class RedditSentimentAnalyzer(BaseSentimentAnalyzer):
         
         return pd.DataFrame(posts_data)
     
-    def analyze_sentiment(self, df: pd.DataFrame) -> SentimentResult:
-        """
-        Analyze overall sentiment of posts
-        
-        Args:
-            df: DataFrame containing post data
+    def get_sentiment(self) -> SentimentResult:
+        """Get sentiment analysis from Reddit posts"""
+        try:
+            # Fetch and analyze posts
+            df = self.scrape_posts()
+            if df.empty:
+                return SentimentResult(
+                    value=0.0,
+                    classification="Neutral",
+                    interpretation="No data available for analysis",
+                    raw_data={'error': 'No data available'},
+                    timestamp=datetime.now().isoformat()
+                )
             
-        Returns:
-            SentimentResult object containing sentiment analysis
-        """
-        if df.empty:
+            def categorize_sentiment(score):
+                if score > 0.05:
+                    return 'Positive'
+                elif score < -0.05:
+                    return 'Negative'
+                return 'Neutral'
+            
+            sentiment_counts = df['title_sentiment_compound'].apply(categorize_sentiment).value_counts()
+            average_sentiment = df['title_sentiment_compound'].mean()
+            
+            # Already normalized between -1 and 1 by VADER
+            sentiment_value = average_sentiment
+            classification = self.classify_sentiment(sentiment_value)
+            
+            interpretation = f"{classification} - Reddit sentiment is "
+            if sentiment_value > 0:
+                interpretation += "positive, showing optimistic market signals"
+            elif sentiment_value < 0:
+                interpretation += "negative, showing pessimistic market signals"
+            else:
+                interpretation += "neutral, showing balanced market signals"
+            
             return SentimentResult(
-                value=0.0,
-                classification="Neutral",
-                interpretation="No data available for analysis",
-                raw_data={'error': 'No data available'},
+                value=sentiment_value,
+                classification=classification,
+                interpretation=interpretation,
+                raw_data={
+                    'total_posts': len(df),
+                    'sentiment_distribution': sentiment_counts.to_dict(),
+                    'average_sentiment': average_sentiment
+                },
                 timestamp=datetime.now().isoformat()
             )
-        
-        def categorize_sentiment(score):
-            if score > 0.05:
-                return 'Positive'
-            elif score < -0.05:
-                return 'Negative'
-            return 'Neutral'
-        
-        sentiment_counts = df['title_sentiment_compound'].apply(categorize_sentiment).value_counts()
-        average_sentiment = df['title_sentiment_compound'].mean()
-        
-        # Already normalized between -1 and 1 by VADER
-        sentiment_value = average_sentiment
-        classification = self.classify_sentiment(sentiment_value)
-        
-        interpretation = f"{classification} - Reddit sentiment is "
-        if sentiment_value > 0:
-            interpretation += "positive, showing optimistic market signals"
-        elif sentiment_value < 0:
-            interpretation += "negative, showing pessimistic market signals"
-        else:
-            interpretation += "neutral, showing balanced market signals"
-        
-        return SentimentResult(
-            value=sentiment_value,
-            classification=classification,
-            interpretation=interpretation,
-            raw_data={
-                'total_posts': len(df),
-                'sentiment_distribution': sentiment_counts.to_dict(),
-                'average_sentiment': average_sentiment
-            },
-            timestamp=datetime.now().isoformat()
-        )
+            
+        except Exception as e:
+            return SentimentResult(
+                value=0.0,
+                classification="Error",
+                interpretation=f"Failed to analyze Reddit feed: {str(e)}",
+                raw_data={"error": str(e)},
+                timestamp=datetime.now().isoformat()
+            )
     
     def save_results(self, df: pd.DataFrame, filename: str = 'reddit_sentiment_results.csv'):
         """Save analysis results to CSV"""
@@ -165,7 +169,7 @@ def main():
         
         if not posts_df.empty:
             print(f"Successfully retrieved posts using {sort_method} sorting")
-            sentiment_summary = analyzer.analyze_sentiment(posts_df)
+            sentiment_summary = analyzer.get_sentiment()
             print("\nSentiment Analysis Results:")
             print(sentiment_summary)
             

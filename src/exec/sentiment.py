@@ -34,7 +34,7 @@ def collect_and_append_sentiment():
             subreddit=config.sentiment.reddit_default_subreddit,
             sort=config.sentiment.reddit_default_sort
         )
-        reddit_result = reddit_analyzer.analyze_sentiment(reddit_df)
+        reddit_result = reddit_analyzer.get_sentiment()
         sentiment_dist = reddit_result.raw_data['sentiment_distribution']
         total_posts = reddit_result.raw_data['total_posts']
         reddit_score = RedditScore(
