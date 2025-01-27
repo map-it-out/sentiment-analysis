@@ -5,7 +5,7 @@ from typing import List, Optional, Dict, Any
 import json
 from nltk.sentiment import SentimentIntensityAnalyzer
 from src.sentiment.base_analyzer import BaseSentimentAnalyzer, SentimentResult
-from src.const.url import REDDIT_RSS_FEED_URL, RSS_FEEDS
+from src.config import config
 
 @dataclass
 class RSSItem:
@@ -26,7 +26,7 @@ class RSSFeedError(Exception):
 
 class RSSFeedScraper:
     """Scrapes and processes RSS feed data"""
-    def __init__(self, feed_url: str = REDDIT_RSS_FEED_URL):
+    def __init__(self, feed_url: str = config.api_config.reddit_rss_feed_url):
         self.feed_url = feed_url
 
     def fetch_feed(self) -> List[RSSItem]:
@@ -86,7 +86,7 @@ class RSSFeedScraper:
 
 class RSSFeedSentimentAnalyzer(BaseSentimentAnalyzer):
     """Analyzes sentiment from RSS feed content"""
-    def __init__(self, feed_url: str = REDDIT_RSS_FEED_URL):
+    def __init__(self, feed_url: str = config.api_config.reddit_rss_feed_url):
         self.scraper = RSSFeedScraper(feed_url)
         self.sia = SentimentIntensityAnalyzer()
     
@@ -154,8 +154,8 @@ class RSSFeedSentimentAnalyzer(BaseSentimentAnalyzer):
 
 # Example usage
 if __name__ == "__main__":
-    coin_telegraph_analyzer = RSSFeedSentimentAnalyzer(RSS_FEEDS["CoinTelegraph"])
-    crypto_slate_analyzer = RSSFeedSentimentAnalyzer(RSS_FEEDS["CryptoSlate"])
+    coin_telegraph_analyzer = RSSFeedSentimentAnalyzer(config.api_config.rss_feeds["CoinTelegraph"])
+    crypto_slate_analyzer = RSSFeedSentimentAnalyzer(config.api_config.rss_feeds["CryptoSlate"])
 
     try:
         sentiment = coin_telegraph_analyzer.get_sentiment()

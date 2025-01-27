@@ -1,19 +1,19 @@
 from datetime import datetime
 from pytz import timezone
 
+from src.config import config
+from src.models import CombinedSentiment
 from src.sentiment.fear_greed_index import CNNFearGreedFetcher, FearGreedAnalyzer
 from src.sentiment.reddit_analyzer import RedditSentimentAnalyzer
 from src.utils.sheets.sheets_writer import append_to_sheet
 from src.services.price_service import price_service
-from src.config.config import config
-from src.models.models import CombinedSentiment
 from src.utils.errors.exceptions import SentimentAnalysisError
 
 def collect_and_append_sentiment():
     """Collect all sentiment scores and append them to Google Sheets"""
     try:
         # Initialize analyzers
-        fear_greed_fetcher = CNNFearGreedFetcher(config.api.fng_api_url)
+        fear_greed_fetcher = CNNFearGreedFetcher(config.api_config.fng_api_url)
         fear_greed_analyzer = FearGreedAnalyzer(fear_greed_fetcher)
         reddit_analyzer = RedditSentimentAnalyzer()
         
@@ -52,7 +52,7 @@ def collect_and_append_sentiment():
         )
         
         # Append to Google Sheets
-        result = append_to_sheet(config.api.spreadsheet_id, "Sheet1!A:K", [combined.to_sheet_row()])
+        result = append_to_sheet(config.api_config.spreadsheet_id, "Sheet1!A:K", [combined.to_sheet_row()])
         
         if result:
             print(f"Successfully appended data to sheets")

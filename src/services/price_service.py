@@ -3,14 +3,14 @@ from datetime import datetime
 import requests
 from src.utils.errors.exceptions import DataFetchError
 # TODO: Restructure foldering
-from src.models.models import PriceData
-from src.config.config import config
+from src.models import PriceData
+from src.config import config
 
 class CryptoPriceService:
     """Service for fetching cryptocurrency price data"""
     
     def __init__(self, api_url: str = None):
-        self.api_url = api_url or config.api.bitcoin_price_api_url
+        self.api_url = api_url or config.api_config.bitcoin_price_api_url
     
     def get_bitcoin_price(self) -> PriceData:
         """Fetch current Bitcoin price and related metrics"""

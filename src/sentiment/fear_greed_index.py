@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 import requests
-from src.const.url import FNG_API_URL
+from src.config import config
 from src.sentiment.base_analyzer import BaseSentimentAnalyzer, SentimentResult
 
 @dataclass
@@ -21,7 +21,7 @@ class FearGreedFetcher(ABC):
 
 class CNNFearGreedFetcher(FearGreedFetcher):
     """Implementation of fear and greed fetcher using CNN's API"""
-    def __init__(self, api_url: str = FNG_API_URL):
+    def __init__(self, api_url: str = config.api_config.fng_api_url):
         self.api_url = api_url
         
     def fetch_data(self) -> FearGreedData:
@@ -83,7 +83,7 @@ class FearGreedAnalyzer(BaseSentimentAnalyzer):
 
 # Example usage
 if __name__ == "__main__":
-    fetcher = CNNFearGreedFetcher(FNG_API_URL)
+    fetcher = CNNFearGreedFetcher(config.api_config.fng_api_url)
     analyzer = FearGreedAnalyzer(fetcher)
     
     try:
