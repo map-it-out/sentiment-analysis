@@ -37,8 +37,8 @@ def collect_and_append_sentiment():
             price_data = None
         
         # Calculate weighted scores
-        weighted_fear_greed = fear_greed_sentiment.normalized_score * config.sentiment.fear_greed_weight
-        weighted_reddit = reddit_analysis.normalized_score * config.sentiment.reddit_weight
+        weighted_fear_greed = fear_greed_sentiment.value * config.sentiment.fear_greed_weight
+        weighted_reddit = reddit_analysis.value * config.sentiment.reddit_weight
         
         # Create combined sentiment result
         combined = CombinedSentiment(
@@ -56,8 +56,8 @@ def collect_and_append_sentiment():
         
         if result:
             print(f"Successfully appended data to sheets")
-            print(f"Fear & Greed Score: {combined.fear_greed_score.normalized_score:.2f}")
-            print(f"Reddit Sentiment Score: {combined.reddit_score.normalized_score:.2f}")
+            print(f"Fear & Greed Score: {combined.fear_greed_score.value:.2f}")
+            print(f"Reddit Sentiment Score: {combined.reddit_score.value:.2f}")
             print(f"Final Weighted Score: {combined.final_score:.2f}")
         else:
             print("Failed to append data to sheets")
