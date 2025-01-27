@@ -117,11 +117,18 @@ class RedditSentimentAnalyzer(BaseSentimentAnalyzer):
                     return 'Negative'
                 return 'Neutral'
             
-            sentiment_counts = df['title_sentiment_compound'].apply(categorize_sentiment).value_counts()
-            average_sentiment = df['title_sentiment_compound'].mean()
+            # Calculate combined sentiment from both title and content
+            title_sentiments = df['title_sentiment_compound']
+            content_sentiments = df.get('text_sentiment_compound', pd.Series([0] * len(df)))
             
-            # Already normalized between -1 and 1 by VADER
-            sentiment_value = average_sentiment
+            # Weight title sentiment more heavily (0.6) than content sentiment (0.4)
+            combined_sentiments = title_sentiments * 0.6 + content_sentiments * 0.4
+            
+            # Calculate sentiment distribution using combined sentiment
+            sentiment_counts = combined_sentiments.apply(categorize_sentiment).value_counts()
+            
+            # Use combined sentiment for the overall value
+            sentiment_value = combined_sentiments.mean()
             classification = self.classify_sentiment(sentiment_value)
             
             interpretation = f"{classification} - Reddit sentiment is "
@@ -139,7 +146,9 @@ class RedditSentimentAnalyzer(BaseSentimentAnalyzer):
                 raw_data={
                     'total_posts': len(df),
                     'sentiment_distribution': sentiment_counts.to_dict(),
-                    'average_sentiment': average_sentiment
+                    'average_sentiment': sentiment_value,
+                    'title_sentiment_mean': title_sentiments.mean(),
+                    'content_sentiment_mean': content_sentiments.mean()
                 },
                 timestamp=datetime.now().isoformat()
             )
