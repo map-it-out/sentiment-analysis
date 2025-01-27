@@ -2,7 +2,7 @@ from datetime import datetime
 from pytz import timezone
 
 from src.config import config
-from src.models import CombinedSentiment
+from src.models import CombinedSentiment, FearGreedScore, RedditScore
 from src.sentiment.fear_greed_index import CNNFearGreedFetcher, FearGreedAnalyzer
 from src.sentiment.reddit_analyzer import RedditSentimentAnalyzer
 from src.utils.sheets.sheets_writer import append_to_sheet
@@ -18,7 +18,14 @@ def collect_and_append_sentiment():
         reddit_analyzer = RedditSentimentAnalyzer()
         
         # Get Fear & Greed sentiment
-        fear_greed_sentiment = fear_greed_analyzer.get_sentiment()
+        fear_greed_result = fear_greed_analyzer.get_sentiment()
+        fear_greed_score = FearGreedScore(
+            value=fear_greed_result.value,
+            raw_value=fear_greed_result.raw_data['original_value'],
+            timestamp=datetime.fromisoformat(fear_greed_result.timestamp),
+            classification=fear_greed_result.classification,
+            interpretation=fear_greed_result.interpretation
+        )
         
         # Get Reddit sentiment
         reddit_df = reddit_analyzer.scrape_posts(
@@ -27,7 +34,18 @@ def collect_and_append_sentiment():
             subreddit=config.sentiment.reddit_default_subreddit,
             sort=config.sentiment.reddit_default_sort
         )
-        reddit_analysis = reddit_analyzer.analyze_sentiment(reddit_df)
+        reddit_result = reddit_analyzer.analyze_sentiment(reddit_df)
+        sentiment_dist = reddit_result.raw_data['sentiment_distribution']
+        total_posts = reddit_result.raw_data['total_posts']
+        reddit_score = RedditScore(
+            value=reddit_result.value,
+            raw_value=reddit_result.raw_data['average_sentiment'],
+            timestamp=datetime.fromisoformat(reddit_result.timestamp),
+            positive_ratio=sentiment_dist.get('Positive', 0) / total_posts if total_posts > 0 else 0,
+            negative_ratio=sentiment_dist.get('Negative', 0) / total_posts if total_posts > 0 else 0,
+            neutral_ratio=sentiment_dist.get('Neutral', 0) / total_posts if total_posts > 0 else 0,
+            post_count=total_posts
+        )
         
         # Get Bitcoin price data
         try:
@@ -37,13 +55,13 @@ def collect_and_append_sentiment():
             price_data = None
         
         # Calculate weighted scores
-        weighted_fear_greed = fear_greed_sentiment.value * config.sentiment.fear_greed_weight
-        weighted_reddit = reddit_analysis.value * config.sentiment.reddit_weight
+        weighted_fear_greed = fear_greed_score.value * config.sentiment.fear_greed_weight
+        weighted_reddit = reddit_score.value * config.sentiment.reddit_weight
         
         # Create combined sentiment result
         combined = CombinedSentiment(
-            fear_greed_score=fear_greed_sentiment,
-            reddit_score=reddit_analysis,
+            fear_greed_score=fear_greed_score,
+            reddit_score=reddit_score,
             price_data=price_data,
             weighted_fear_greed=weighted_fear_greed,
             weighted_reddit=weighted_reddit,
