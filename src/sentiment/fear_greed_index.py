@@ -18,6 +18,17 @@ class CNNFearGreedFetcher(FearGreedFetcher):
     def __init__(self, api_url: str = config.api_config.fng_api_url):
         self.api_url = api_url
         
+    def _get_interpretation(self, classification: str) -> str:
+        """Interpret the fear and greed classification"""
+        if classification == "Extreme Greed":
+            return "Market might be due for a correction"
+        elif classification == "Greed":
+            return "Market is optimistic"
+        elif classification == "Fear":
+            return "Market is pessimistic"
+        else:
+            return "Might be a buying opportunity"
+            
     def fetch_data(self, timeout: Optional[float] = None) -> SentimentResult:
         try:
             response = requests.get(self.api_url, timeout=timeout)
@@ -50,14 +61,3 @@ class FearGreedAnalyzer(BaseSentimentAnalyzer):
             return self.fetcher.fetch_data()
         except FearGreedFetchError as e:
             raise e
-    
-    def _get_interpretation(self, classification: str) -> str:
-        """Interpret the fear and greed classification"""
-        if classification == "Extreme Greed":
-            return "Market might be due for a correction"
-        elif classification == "Greed":
-            return "Market is optimistic"
-        elif classification == "Fear":
-            return "Market is pessimistic"
-        else:
-            return "Might be a buying opportunity"
