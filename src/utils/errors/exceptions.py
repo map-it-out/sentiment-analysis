@@ -19,3 +19,7 @@ class DataFetchError(APIError):
 class DataProcessingError(SentimentAnalysisError):
     """Exception raised when failing to process or analyze data"""
     pass
+
+class FearGreedFetchError(SentimentAnalysisError):
+    """Exception raised when failing to fetch Fear & Greed Index data"""
+    pass
