@@ -79,9 +79,9 @@ def collect_and_append_sentiment():
         if result:
             print(f"Successfully appended data to sheets")
             print(f"Fear & Greed Score: {combined.fear_greed_score.value:.2f}")
-            print(f"Reddit Sentiment Score: {combined.reddit_score.value:.2f}")
-            print(f"CoinTelegraph RSS Score: {combined.rss_1_score.value:.2f}")
-            print(f"CryptoSlate RSS Score: {combined.rss_2_score.value:.2f}")
+            print(f"Reddit Sentiment Score: {combined.reddit_score:.2f}")
+            print(f"CoinTelegraph RSS Score: {combined.rss_1_score:.2f}")
+            print(f"CryptoSlate RSS Score: {combined.rss_2_score:.2f}")
             print(f"Final Weighted Score: {combined.final_score:.2f}")
         else:
             print("Failed to append data to sheets")

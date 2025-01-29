@@ -120,23 +120,20 @@ class RSSFeedSentimentAnalyzer(BaseSentimentAnalyzer):
             # Calculate average sentiment
             avg_sentiment = sum(sentiments) / len(sentiments)
             
-            # Normalize the sentiment score to 0-1 range
-            normalized_sentiment = (avg_sentiment + 1) / 2  # Convert from [-1, 1] to [0, 1]
-            
-            # Get classification based on normalized score
-            classification = self.classify_sentiment(normalized_sentiment)
+            # Get classification based on sentiment score
+            classification = self.classify_sentiment(avg_sentiment)
             
             # Create interpretation
             interpretation = f"{classification} - RSS feed sentiment is "
-            if normalized_sentiment > 0.5:
+            if avg_sentiment > 0:
                 interpretation += "positive, showing optimistic market signals"
-            elif normalized_sentiment < 0.5:
+            elif avg_sentiment < 0:
                 interpretation += "negative, showing pessimistic market signals"
             else:
                 interpretation += "neutral, showing balanced market signals"
             
             return SentimentResult(
-                value=normalized_sentiment,
+                value=avg_sentiment,
                 classification=classification,
                 interpretation=interpretation,
                 raw_data={

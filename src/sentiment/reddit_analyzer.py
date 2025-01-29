@@ -138,7 +138,7 @@ class RedditSentimentAnalyzer(BaseSentimentAnalyzer):
                 interpretation += "negative, showing pessimistic market signals"
             else:
                 interpretation += "neutral, showing balanced market signals"
-            
+                
             return SentimentResult(
                 value=sentiment_value,
                 classification=classification,
@@ -166,4 +166,3 @@ class RedditSentimentAnalyzer(BaseSentimentAnalyzer):
         """Save analysis results to CSV"""
         df.to_csv(filename, index=False)
         print(f"Results saved to {filename}")
-        
