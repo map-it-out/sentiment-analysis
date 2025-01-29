@@ -55,7 +55,7 @@ class CombinedSentiment:
         """Convert to Google Sheets row format"""
         return [
             self.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-            self.fear_greed_score.normalized_score,
+            self.fear_greed_score.value,
             self.rss_1_score,
             self.rss_2_score,
             self.reddit_score,
