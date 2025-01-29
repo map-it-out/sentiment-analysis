@@ -151,3 +151,4 @@ class RSSFeedSentimentAnalyzer(BaseSentimentAnalyzer):
                 raw_data={"error": str(e)},
                 timestamp=datetime.now().isoformat()
             )
+            

@@ -66,9 +66,9 @@ def collect_and_append_sentiment():
             fear_greed_score=fear_greed_score,
             price_data=price_data,
             weighted_fear_greed=weighted_fear_greed,
-            weighted_reddit=weighted_reddit,
-            weighted_rss_1=weighted_rss_1,
-            weighted_rss_2=weighted_rss_2,
+            reddit_score=reddit_score.value,
+            rss_1_score=rss_1_score.value,
+            rss_2_score=rss_2_score.value,
             final_score=weighted_fear_greed + weighted_reddit + weighted_rss_1 + weighted_rss_2,
             timestamp=datetime.now(tz=timezone('Asia/Singapore'))
         )

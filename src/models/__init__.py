@@ -45,9 +45,9 @@ class CombinedSentiment:
     fear_greed_score: FearGreedScore
     price_data: Optional[PriceData]
     weighted_fear_greed: float
-    weighted_reddit: float
-    weighted_rss_1: float
-    weighted_rss_2: float
+    reddit_score: float
+    rss_1_score: float
+    rss_2_score: float
     final_score: float
     timestamp: datetime
     
@@ -56,9 +56,9 @@ class CombinedSentiment:
         return [
             self.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             self.fear_greed_score.normalized_score,
-            self.weighted_rss_1,
-            self.weighted_rss_2,
-            self.weighted_reddit,
+            self.rss_1_score,
+            self.rss_2_score,
+            self.reddit_score,
             self.final_score,
             self.price_data.current_price if self.price_data else None,
             self.price_data.price_1h if self.price_data else None,
