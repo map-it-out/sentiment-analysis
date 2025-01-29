@@ -40,12 +40,15 @@ class CNNFearGreedFetcher(FearGreedFetcher):
             # Convert value from [0, 100] to [-1, 1]
             normalized_value = (float(latest['value']) / 50.0) - 1.0
             
+            # Convert Unix timestamp to ISO format
+            timestamp = datetime.fromtimestamp(int(latest['timestamp'])).isoformat()
+            
             return SentimentResult(
                 value=normalized_value,
                 classification=latest['value_classification'],
                 interpretation=self._get_interpretation(latest['value_classification']),
                 raw_data={'original_value': float(latest['value'])},
-                timestamp=latest['timestamp']
+                timestamp=timestamp
             )
         except Exception as e:
             raise FearGreedFetchError(f"Failed to fetch fear and greed data: {str(e)}")
