@@ -43,10 +43,11 @@ class PriceData:
 class CombinedSentiment:
     """Combined sentiment analysis result"""
     fear_greed_score: FearGreedScore
-    reddit_score: RedditScore
     price_data: Optional[PriceData]
     weighted_fear_greed: float
     weighted_reddit: float
+    weighted_rss_1: float
+    weighted_rss_2: float
     final_score: float
     timestamp: datetime
     
@@ -55,8 +56,8 @@ class CombinedSentiment:
         return [
             self.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             self.fear_greed_score.normalized_score,
-            self.reddit_score.normalized_score,
-            self.weighted_fear_greed,
+            self.weighted_rss_1,
+            self.weighted_rss_2,
             self.weighted_reddit,
             self.final_score,
             self.price_data.current_price if self.price_data else None,

@@ -20,8 +20,10 @@ class APIConfig:
 @dataclass
 class SentimentConfig:
     """Sentiment analysis configuration"""
-    fear_greed_weight: float = 0.5
-    reddit_weight: float = 0.5
+    fear_greed_weight: float = 0.25
+    reddit_weight: float = 0.25
+    rss_weight: float = 0.25
+    rss_2_weight: float = 0.25
     reddit_post_limit: int = 100
     reddit_default_subreddit: str = "CryptoCurrency"
     reddit_default_sort: str = "new"    

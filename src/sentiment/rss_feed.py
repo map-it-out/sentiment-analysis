@@ -151,29 +151,3 @@ class RSSFeedSentimentAnalyzer(BaseSentimentAnalyzer):
                 raw_data={"error": str(e)},
                 timestamp=datetime.now().isoformat()
             )
-
-# Example usage
-if __name__ == "__main__":
-    coin_telegraph_analyzer = RSSFeedSentimentAnalyzer(config.api_config.rss_feeds["CoinTelegraph"])
-    crypto_slate_analyzer = RSSFeedSentimentAnalyzer(config.api_config.rss_feeds["CryptoSlate"])
-
-    try:
-        sentiment = coin_telegraph_analyzer.get_sentiment()
-        print(f"RSS Feed Sentiment Analysis:")
-        print(f"Value for coin telegraph: {sentiment.value:.2f}")
-        print(f"Classification for coin telegraph: {sentiment.classification}")
-        print(f"Interpretation for coin telegraph: {sentiment.interpretation}")
-        print(f"Items Analyzed for coin telegraph: {sentiment.raw_data['items_analyzed']}")
-        if sentiment.raw_data.get('latest_item_date'):
-            print(f"Latest Item Date for coin telegraph: {sentiment.raw_data['latest_item_date']}")
-
-        sentiment = crypto_slate_analyzer.get_sentiment()
-        print(f"\nRSS Feed Sentiment Analysis:")
-        print(f"Value for crypto slate: {sentiment.value:.2f}")
-        print(f"Classification for crypto slate: {sentiment.classification}")
-        print(f"Interpretation for crypto slate: {sentiment.interpretation}")
-        print(f"Items Analyzed for crypto slate: {sentiment.raw_data['items_analyzed']}")
-        if sentiment.raw_data.get('latest_item_date'):
-            print(f"Latest Item Date for crypto slate: {sentiment.raw_data['latest_item_date']}")
-    except Exception as e:
-        print(f"Error: {e}")

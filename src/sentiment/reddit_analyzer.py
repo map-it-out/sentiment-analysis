@@ -166,29 +166,4 @@ class RedditSentimentAnalyzer(BaseSentimentAnalyzer):
         """Save analysis results to CSV"""
         df.to_csv(filename, index=False)
         print(f"Results saved to {filename}")
-
-def main():
-    """Main function to demonstrate sentiment analysis"""
-    analyzer = RedditSentimentAnalyzer()
-    
-    # Try different sorting methods
-    for sort_method in ['new', 'hot', 'top', 'rising']:
-        print(f"\nTrying {sort_method} posts...")
-        posts_df = analyzer.scrape_posts(sort=sort_method, limit=50)
         
-        if not posts_df.empty:
-            print(f"Successfully retrieved posts using {sort_method} sorting")
-            sentiment_summary = analyzer.get_sentiment()
-            print("\nSentiment Analysis Results:")
-            print(sentiment_summary)
-            
-            # Save results
-            output_file = f'reddit_sentiment_{sort_method}.csv'
-            posts_df.to_csv(output_file, index=False)
-            print(f"\nResults saved to {output_file}")
-            break
-    else:
-        print("\nFailed to retrieve posts with any sorting method")
-
-if __name__ == '__main__':
-    main()

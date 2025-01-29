@@ -5,6 +5,7 @@ from src.config import config
 from src.models import CombinedSentiment, FearGreedScore, RedditScore
 from src.sentiment.fear_greed_index import CNNFearGreedFetcher, FearGreedAnalyzer
 from src.sentiment.reddit_analyzer import RedditSentimentAnalyzer
+from src.sentiment.rss_feed import RSSFeedSentimentAnalyzer
 from src.utils.sheets.sheets_writer import append_to_sheet
 from src.services.price_service import price_service
 from src.utils.errors.exceptions import SentimentAnalysisError
@@ -16,6 +17,8 @@ def collect_and_append_sentiment():
         fear_greed_fetcher = CNNFearGreedFetcher(config.api_config.fng_api_url)
         fear_greed_analyzer = FearGreedAnalyzer(fear_greed_fetcher)
         reddit_analyzer = RedditSentimentAnalyzer()
+        cointelegraph_analyzer = RSSFeedSentimentAnalyzer(config.api_config.rss_feeds["CoinTelegraph"])
+        cryptoslate_analyzer = RSSFeedSentimentAnalyzer(config.api_config.rss_feeds["CryptoSlate"])
         
         # Get Fear & Greed sentiment
         fear_greed_result = fear_greed_analyzer.get_sentiment()
@@ -28,12 +31,6 @@ def collect_and_append_sentiment():
         )
         
         # Get Reddit sentiment
-        reddit_df = reddit_analyzer.scrape_posts(
-            query='bitcoin',
-            limit=config.sentiment.reddit_post_limit,
-            subreddit=config.sentiment.reddit_default_subreddit,
-            sort=config.sentiment.reddit_default_sort
-        )
         reddit_result = reddit_analyzer.get_sentiment()
         sentiment_dist = reddit_result.raw_data['sentiment_distribution']
         total_posts = reddit_result.raw_data['total_posts']
@@ -47,6 +44,10 @@ def collect_and_append_sentiment():
             post_count=total_posts
         )
         
+        # Get RSS Feed sentiment
+        rss_1_score = cointelegraph_analyzer.get_sentiment()
+        rss_2_score = cryptoslate_analyzer.get_sentiment()
+        
         # Get Bitcoin price data
         try:
             price_data = price_service.get_bitcoin_price()
@@ -57,15 +58,18 @@ def collect_and_append_sentiment():
         # Calculate weighted scores
         weighted_fear_greed = fear_greed_score.value * config.sentiment.fear_greed_weight
         weighted_reddit = reddit_score.value * config.sentiment.reddit_weight
+        weighted_rss_1 = rss_1_score.value * config.sentiment.rss_weight
+        weighted_rss_2 = rss_2_score.value * config.sentiment.rss_2_weight
         
         # Create combined sentiment result
         combined = CombinedSentiment(
             fear_greed_score=fear_greed_score,
-            reddit_score=reddit_score,
             price_data=price_data,
             weighted_fear_greed=weighted_fear_greed,
             weighted_reddit=weighted_reddit,
-            final_score=weighted_fear_greed + weighted_reddit,
+            weighted_rss_1=weighted_rss_1,
+            weighted_rss_2=weighted_rss_2,
+            final_score=weighted_fear_greed + weighted_reddit + weighted_rss_1 + weighted_rss_2,
             timestamp=datetime.now(tz=timezone('Asia/Singapore'))
         )
         
@@ -76,6 +80,8 @@ def collect_and_append_sentiment():
             print(f"Successfully appended data to sheets")
             print(f"Fear & Greed Score: {combined.fear_greed_score.value:.2f}")
             print(f"Reddit Sentiment Score: {combined.reddit_score.value:.2f}")
+            print(f"CoinTelegraph RSS Score: {combined.rss_1_score.value:.2f}")
+            print(f"CryptoSlate RSS Score: {combined.rss_2_score.value:.2f}")
             print(f"Final Weighted Score: {combined.final_score:.2f}")
         else:
             print("Failed to append data to sheets")

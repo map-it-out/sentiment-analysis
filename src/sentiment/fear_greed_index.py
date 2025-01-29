@@ -80,17 +80,3 @@ class FearGreedAnalyzer(BaseSentimentAnalyzer):
             return "Fear - Market is pessimistic"
         else:
             return "Extreme Fear - Might be a buying opportunity"
-
-# Example usage
-if __name__ == "__main__":
-    fetcher = CNNFearGreedFetcher(config.api_config.fng_api_url)
-    analyzer = FearGreedAnalyzer(fetcher)
-    
-    try:
-        sentiment = analyzer.get_sentiment()
-        print(f"Current Fear & Greed Index: {sentiment.value}")
-        print(f"Classification: {sentiment.classification}")
-        print(f"Interpretation: {sentiment.interpretation}")
-        print(f"Timestamp: {sentiment.timestamp}")
-    except FearGreedFetchError as e:
-        print(f"Error: {e}")
