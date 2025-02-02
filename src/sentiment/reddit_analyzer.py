@@ -4,8 +4,10 @@ import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 import os
 from dotenv import load_dotenv
+from src.sentiment.base_analyzer import BaseSentimentAnalyzer, SentimentResult
+from datetime import datetime
 
-class RedditSentimentAnalyzer:
+class RedditSentimentAnalyzer(BaseSentimentAnalyzer):
     """Reddit sentiment analyzer for cryptocurrency discussions"""
     
     def __init__(self):
@@ -94,61 +96,73 @@ class RedditSentimentAnalyzer:
         
         return pd.DataFrame(posts_data)
     
-    def analyze_sentiment(self, df: pd.DataFrame) -> dict:
-        """
-        Analyze overall sentiment of posts
-        
-        Args:
-            df: DataFrame containing post data
+    def get_sentiment(self) -> SentimentResult:
+        """Get sentiment analysis from Reddit posts"""
+        try:
+            # Fetch and analyze posts
+            df = self.scrape_posts()
+            if df.empty:
+                return SentimentResult(
+                    value=0.0,
+                    classification="Neutral",
+                    interpretation="No data available for analysis",
+                    raw_data={'error': 'No data available'},
+                    timestamp=datetime.now().isoformat()
+                )
             
-        Returns:
-            Dictionary with sentiment summary
-        """
-        if df.empty:
-            return {'error': 'No data available for analysis'}
-        
-        def categorize_sentiment(score):
-            if score > 0.05:
-                return 'Positive'
-            elif score < -0.05:
-                return 'Negative'
-            return 'Neutral'
-        
-        sentiment_counts = df['title_sentiment_compound'].apply(categorize_sentiment).value_counts()
-        
-        return {
-            'total_posts': len(df),
-            'sentiment_distribution': sentiment_counts.to_dict(),
-            'average_sentiment': df['title_sentiment_compound'].mean()
-        }
+            def categorize_sentiment(score):
+                if score > 0.05:
+                    return 'Positive'
+                elif score < -0.05:
+                    return 'Negative'
+                return 'Neutral'
+            
+            # Calculate combined sentiment from both title and content
+            title_sentiments = df['title_sentiment_compound']
+            content_sentiments = df.get('text_sentiment_compound', pd.Series([0] * len(df)))
+            
+            # Weight title sentiment more heavily (0.6) than content sentiment (0.4)
+            combined_sentiments = title_sentiments * 0.6 + content_sentiments * 0.4
+            
+            # Calculate sentiment distribution using combined sentiment
+            sentiment_counts = combined_sentiments.apply(categorize_sentiment).value_counts()
+            
+            # Use combined sentiment for the overall value
+            sentiment_value = combined_sentiments.mean()
+            classification = self.classify_sentiment(sentiment_value)
+            
+            interpretation = f"{classification} - Reddit sentiment is "
+            if sentiment_value > 0:
+                interpretation += "positive, showing optimistic market signals"
+            elif sentiment_value < 0:
+                interpretation += "negative, showing pessimistic market signals"
+            else:
+                interpretation += "neutral, showing balanced market signals"
+                
+            return SentimentResult(
+                value=sentiment_value,
+                classification=classification,
+                interpretation=interpretation,
+                raw_data={
+                    'total_posts': len(df),
+                    'sentiment_distribution': sentiment_counts.to_dict(),
+                    'average_sentiment': sentiment_value,
+                    'title_sentiment_mean': title_sentiments.mean(),
+                    'content_sentiment_mean': content_sentiments.mean()
+                },
+                timestamp=datetime.now().isoformat()
+            )
+            
+        except Exception as e:
+            return SentimentResult(
+                value=0.0,
+                classification="Error",
+                interpretation=f"Failed to analyze Reddit feed: {str(e)}",
+                raw_data={"error": str(e)},
+                timestamp=datetime.now().isoformat()
+            )
     
     def save_results(self, df: pd.DataFrame, filename: str = 'reddit_sentiment_results.csv'):
         """Save analysis results to CSV"""
         df.to_csv(filename, index=False)
         print(f"Results saved to {filename}")
-
-def main():
-    """Main function to demonstrate sentiment analysis"""
-    analyzer = RedditSentimentAnalyzer()
-    
-    # Try different sorting methods
-    for sort_method in ['new', 'hot', 'top', 'rising']:
-        print(f"\nTrying {sort_method} posts...")
-        posts_df = analyzer.scrape_posts(sort=sort_method, limit=50)
-        
-        if not posts_df.empty:
-            print(f"Successfully retrieved posts using {sort_method} sorting")
-            sentiment_summary = analyzer.analyze_sentiment(posts_df)
-            print("\nSentiment Analysis Results:")
-            print(sentiment_summary)
-            
-            # Save results
-            output_file = f'reddit_sentiment_{sort_method}.csv'
-            posts_df.to_csv(output_file, index=False)
-            print(f"\nResults saved to {output_file}")
-            break
-    else:
-        print("\nFailed to retrieve posts with any sorting method")
-
-if __name__ == '__main__':
-    main()

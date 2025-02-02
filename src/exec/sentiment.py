@@ -1,99 +1,95 @@
 from datetime import datetime
 from pytz import timezone
-import os
-from dotenv import load_dotenv
 
+from src.config import config
+from src.models import CombinedSentiment, FearGreedScore, RedditScore
 from src.sentiment.fear_greed_index import CNNFearGreedFetcher, FearGreedAnalyzer
 from src.sentiment.reddit_analyzer import RedditSentimentAnalyzer
+from src.sentiment.rss_feed import RSSFeedSentimentAnalyzer
 from src.utils.sheets.sheets_writer import append_to_sheet
-from src.const.url import FNG_API_URL
-import requests
-
-#TODO: Refactor code
-def get_bitcoin_price():
-    """Fetch Bitcoin price data from Alternative.me API"""
-    try:
-        response = requests.get('https://api.alternative.me/v2/ticker/?limit=1')
-        response.raise_for_status()
-        data = response.json()
-        
-        btc_data = data['data']['1']  # 1 is the ID for Bitcoin
-        current_price = float(btc_data['quotes']['USD']['price'])
-        price_1h = current_price * (1 + float(btc_data['quotes']['USD']['percentage_change_1h']) / 100)
-        price_24h = current_price * (1 + float(btc_data['quotes']['USD']['percentage_change_24h']) / 100)
-        
-        return current_price, price_1h, price_24h
-    except Exception as e:
-        print(f"Error fetching Bitcoin price: {str(e)}")
-        return None, None, None
+from src.services.price_service import price_service
+from src.utils.errors.exceptions import SentimentAnalysisError
 
 def collect_and_append_sentiment():
     """Collect all sentiment scores and append them to Google Sheets"""
-    load_dotenv()
-    
-    # Initialize analyzers
-    fear_greed_fetcher = CNNFearGreedFetcher(FNG_API_URL)
-    fear_greed_analyzer = FearGreedAnalyzer(fear_greed_fetcher)
-    reddit_analyzer = RedditSentimentAnalyzer()
-    
     try:
+        # Initialize analyzers
+        fear_greed_fetcher = CNNFearGreedFetcher(config.api_config.fng_api_url)
+        fear_greed_analyzer = FearGreedAnalyzer(fear_greed_fetcher)
+        reddit_analyzer = RedditSentimentAnalyzer()
+        cointelegraph_analyzer = RSSFeedSentimentAnalyzer(config.api_config.rss_feeds["CoinTelegraph"])
+        cryptoslate_analyzer = RSSFeedSentimentAnalyzer(config.api_config.rss_feeds["CryptoSlate"])
+        
         # Get Fear & Greed sentiment
-        fear_greed_sentiment = fear_greed_analyzer.get_sentiment()
-        fear_greed_score = (fear_greed_sentiment.value + 1) / 2  # Convert from [-1, 1] to [0, 1]
+        fear_greed_result = fear_greed_analyzer.get_sentiment()
+        fear_greed_score = FearGreedScore(
+            value=fear_greed_result.value,
+            raw_value=fear_greed_result.raw_data['original_value'],
+            timestamp=datetime.fromisoformat(fear_greed_result.timestamp),
+            classification=fear_greed_result.classification,
+            interpretation=fear_greed_result.interpretation
+        )
         
         # Get Reddit sentiment
-        reddit_df = reddit_analyzer.scrape_posts(query='bitcoin', limit=100)
-        reddit_analysis = reddit_analyzer.analyze_sentiment(reddit_df)
-        reddit_score = (reddit_analysis['average_sentiment'] + 1) / 2  # Convert from [-1, 1] to [0, 1]
+        reddit_result = reddit_analyzer.get_sentiment()
+        sentiment_dist = reddit_result.raw_data['sentiment_distribution']
+        total_posts = reddit_result.raw_data['total_posts']
+        reddit_score = RedditScore(
+            value=reddit_result.value,
+            raw_value=reddit_result.raw_data['average_sentiment'],
+            timestamp=datetime.fromisoformat(reddit_result.timestamp),
+            positive_ratio=sentiment_dist.get('Positive', 0) / total_posts if total_posts > 0 else 0,
+            negative_ratio=sentiment_dist.get('Negative', 0) / total_posts if total_posts > 0 else 0,
+            neutral_ratio=sentiment_dist.get('Neutral', 0) / total_posts if total_posts > 0 else 0,
+            post_count=total_posts
+        )
         
-        # Calculate weighted scores (0.5 each)
-        weighted_fear_greed = fear_greed_score * 0.5
-        weighted_reddit = reddit_score * 0.5
+        # Get RSS Feed sentiment
+        rss_1_score = cointelegraph_analyzer.get_sentiment()
+        rss_2_score = cryptoslate_analyzer.get_sentiment()
         
-        # Calculate final score
-        final_score = weighted_fear_greed + weighted_reddit
+        # Get Bitcoin price data
+        try:
+            price_data = price_service.get_bitcoin_price()
+        except Exception as e:
+            print(f"Warning: Failed to fetch price data: {e}")
+            price_data = None
         
-        # Get current BTC price from Alternative.me API
-        current_price, price_1h, price_24h = get_bitcoin_price()
-        if current_price is None:
-            print("Using placeholder values due to price fetch error")
-            current_price = 100000
-            price_1h = 101500
-            price_24h = 103500
+        # Calculate weighted scores
+        weighted_fear_greed = fear_greed_score.value * config.sentiment.fear_greed_weight
+        weighted_reddit = reddit_score.value * config.sentiment.reddit_weight
+        weighted_rss_1 = rss_1_score.value * config.sentiment.rss_weight
+        weighted_rss_2 = rss_2_score.value * config.sentiment.rss_2_weight
         
-        # Calculate price changes
-        change_1h = (price_1h - current_price) / current_price
-        change_24h = (price_24h - current_price) / current_price
-        
-        # Prepare row for sheets
-        row = [
-            datetime.now(tz=timezone('Asia/Singapore')).strftime('%Y-%m-%d %H:%M:%S'),
-            fear_greed_score,
-            reddit_score,
-            weighted_fear_greed,
-            weighted_reddit,
-            final_score,
-            current_price,
-            price_1h,
-            f"{change_1h:.2%}",
-            price_24h,
-            f"{change_24h:.2%}"
-        ]
+        # Create combined sentiment result
+        combined = CombinedSentiment(
+            fear_greed_score=fear_greed_score,
+            price_data=price_data,
+            weighted_fear_greed=weighted_fear_greed,
+            reddit_score=reddit_score.value,
+            rss_1_score=rss_1_score.value,
+            rss_2_score=rss_2_score.value,
+            final_score=weighted_fear_greed + weighted_reddit + weighted_rss_1 + weighted_rss_2,
+            timestamp=datetime.now(tz=timezone('Asia/Singapore'))
+        )
         
         # Append to Google Sheets
-        spreadsheet_id = os.getenv('SPREADSHEET_ID')
-        result = append_to_sheet(spreadsheet_id, "Sheet1!A:K", [row])
+        result = append_to_sheet(config.api_config.spreadsheet_id, "Sheet1!A:K", [combined.to_sheet_row()])
         
         if result:
             print(f"Successfully appended data to sheets")
-            print(f"Fear & Greed Score: {fear_greed_score:.2f}")
-            print(f"Reddit Sentiment Score: {reddit_score:.2f}")
-            print(f"Final Weighted Score: {final_score:.2f}")
+            print(f"Fear & Greed Score: {combined.fear_greed_score.value:.2f}")
+            print(f"Reddit Sentiment Score: {combined.reddit_score:.2f}")
+            print(f"CoinTelegraph RSS Score: {combined.rss_1_score:.2f}")
+            print(f"CryptoSlate RSS Score: {combined.rss_2_score:.2f}")
+            print(f"Final Weighted Score: {combined.final_score:.2f}")
         else:
             print("Failed to append data to sheets")
             
+    except SentimentAnalysisError as e:
+        print(f"Sentiment analysis error: {str(e)}")
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"Unexpected error: {str(e)}")
 
 if __name__ == "__main__":
     collect_and_append_sentiment()
